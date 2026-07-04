@@ -3064,7 +3064,7 @@
     /* ════════════════════════════════════════
        PLACE ORDER
     ════════════════════════════════════════ */
-    function placeOrder(method) {
+    async function placeOrder(method) {
       const name = $('co-name').value.trim();
       const phone = $('co-phone').value.trim();
       if (!name || !phone) { showToast('Please fill in Step 2 — your details'); goStep(2); return; }
@@ -3072,8 +3072,9 @@
       const ref = genRef();
 
       if (method === 'wa') {
-        saveOrderToServer(method, name, phone, ref);
-        sendWhatsApp();
+        const waWindow = window.open('', '_blank'); // open immediately, in direct response to the click, so browsers don't block it
+        await saveOrderToServer(method, name, phone, ref);
+        sendWhatsApp(undefined, ref, waWindow);
         showSuccess('wa', name, ref);
         cart = [];
         updateCartUI();
@@ -3097,7 +3098,7 @@
     async function saveOrderToServer(method, name, phone, ref) {
       try {
         const momoNumber = method === 'momo' ? $('momo-num').value.trim() : 'N/A';
-        const items = cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty }));
+        const items = cart.map(i => ({ id: i.id, name: i.name, brand: i.brand, price: i.price, qty: i.qty, img: i.img }));
         const headers = { 'Content-Type': 'application/json' };
         const token = localStorage.getItem('customerToken');
         if (token) headers['x-customer-token'] = token;
@@ -3166,7 +3167,7 @@
       $('modalTitle').textContent = 'Order Complete';
     }
 
-    function sendWhatsApp(payType) {
+    function sendWhatsApp(payType, ref, existingWindow) {
       const name = $('co-name').value || 'Customer';
       const phone = $('co-phone').value || '—';
       const branch = $('co-branch').value || 'Not specified';
@@ -3176,11 +3177,16 @@
 
       const payLabels = { wa: 'WhatsApp / Cash', card: 'Card Payment', momo: (currentMomo === 'mtn' ? 'MTN MoMo' : 'Airtel Money') };
       const orderLines = cart.map(i => `  • ${i.name} (${i.brand}) ×${i.qty} — ${fmt(i.price * i.qty)}`).join('\n');
-      const imageLines = cart.map(i => `  • ${i.name}: ${i.img}`).join('\n');
+      const orderLink = ref ? `https://twomg-backend.onrender.com/order/${ref}` : '';
 
-      const msg = `🛒 *NEW ORDER — 2MG Sports Park*\n\n👤 *Name:* ${name}\n📞 *Phone:* ${phone}\n🏬 *Branch:* ${branch}\n🚚 *Fulfillment:* ${delivery}${delivery === 'Delivery' ? '\n📍 *Address:* ' + address : ''}\n💳 *Payment:* ${payLabels[payType || 'wa']}\n\n📦 *Order Items:*\n${orderLines}\n\n🖼️ *Product Photos:*\n${imageLines}\n\n💰 *TOTAL: ${fmt(cartTotal())}*\n\n📝 *Notes:* ${notes}\n\n---\nSent from 2MG Sports Park website`;
+      const msg = `🛒 *NEW ORDER — 2MG Sports Park*\n\n👤 *Name:* ${name}\n📞 *Phone:* ${phone}\n🏬 *Branch:* ${branch}\n🚚 *Fulfillment:* ${delivery}${delivery === 'Delivery' ? '\n📍 *Address:* ' + address : ''}\n💳 *Payment:* ${payLabels[payType || 'wa']}\n\n📦 *Order Items:*\n${orderLines}\n\n💰 *TOTAL: ${fmt(cartTotal())}*\n\n📝 *Notes:* ${notes}${orderLink ? `\n\n🧾 View order with photos:\n${orderLink}` : ''}\n\n---\nSent from 2MG Sports Park website`;
 
-      window.open('https://wa.me/250793559543?text=' + encodeURIComponent(msg), '_blank');
+      const waLink = 'https://wa.me/250793559543?text=' + encodeURIComponent(msg);
+      if (existingWindow) {
+        existingWindow.location.href = waLink;
+      } else {
+        window.open(waLink, '_blank');
+      }
     }
 
     function quickWA() {
