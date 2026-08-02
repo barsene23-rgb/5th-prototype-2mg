@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2MG Sports Park — Admin</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+  <link rel="manifest" href="/admin-manifest.json" />
+  <meta name="theme-color" content="#070707" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #070707;
+      --card: #121212;
+      --card2: #181818;
+      --border: #2b2b2b;
+      --text: #f4f4f4;
+      --muted: #9da4b4;
+      --red: #ff1f1f;
+      --green: #16d36b;
+      --yellow: #ffd84d;
+      --blue: #61a4ff;
+      --orange: #ff8a00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Barlow', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .container {
+      width: min(1380px, 94%);
+      margin: 0 auto;
+    }
+
+    header {
+      background: linear-gradient(90deg, #0d0d0d, #171717);
+      border-bottom: 2px solid var(--red);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+    }
+
+    .brand {
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 3px;
+      font-size: 1.8rem;
+    }
+
+    .brand span {
+      color: var(--red);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      padding: .7rem .95rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: var(--red);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #232323;
+      color: white;
+      border: 1px solid var(--border);
+    }
+
+    .login-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+    }
+
+    .login-card {
+      width: min(440px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.4rem;
+      border-radius: 18px;
+    }
+
+    .login-card h2 {
+      margin: .2rem 0 0;
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 2px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+      margin: 1rem 0 1rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: .7rem .95rem;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--red);
+      color: white;
+      border-color: var(--red);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: .76rem;
+    }
+
+    .stat .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: .25rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 1rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: .8rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: .85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: .28rem .6rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 700;
+    }
+
+    .pill.pending {
+      background: rgba(255, 216, 77, .16);
+      color: var(--yellow);
+    }
+
+    .pill.success {
+      background: rgba(22, 211, 107, .16);
+      color: var(--green);
+    }
+
+    .pill.failed {
+      background: rgba(255, 31, 31, .16);
+      color: #ff9b9b;
+    }
+
+    .pill.confirmed {
+      background: rgba(97, 164, 255, .16);
+      color: var(--blue);
+    }
+
+    form {
+      display: grid;
+      gap: .7rem;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: .72rem .8rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0f0f0f;
+      color: white;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .small {
+      font-size: .85rem;
+      color: var(--muted);
+    }
+
+    .search-row {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+      margin-bottom: .8rem;
+    }
+
+    .search-row input {
+      max-width: 360px;
+    }
+
+    .inline {
+      display: flex;
+      gap: .4rem;
+      align-items: center;
+    }
+
+    @media (max-width: 960px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script>
+    const app = document.getElementById('app');
+    // Automatically use your local backend when you're testing on your PC (file:// or localhost),
+    // and your live Render backend everywhere else (e.g. once this is deployed on Netlify).
+    const API_BASE = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:3000'
+      : 'https://twomg-backend.onrender.com';
+    let adminToken = localStorage.getItem('adminToken') || '';
+    let activeTab = 'dashboard';
+    let stats = null;
+    let products = [];
+    let orders = [];
+    let members = [];
+    let requests = [];
+    let searchTerm = '';
+    let categories = []; // loaded from /categories — [{ slug, label, emoji, subcategories: [{slug, label}] }]
+    let deferredInstallPrompt = null; // captured 'beforeinstallprompt' event, used once logged in
+    let killSwitchPoll = null;
+
+    // The browser only fires this once a service worker + manifest are in place.
+    // We don't register the service worker until AFTER login, so this realistically
+    // only fires for someone who has already authenticated — a random visitor on the
+    // login screen never gets this far.
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      showInstallButtonIfReady();
+    });
+
+    function showInstallButtonIfReady() {
+      if (!adminToken || !deferredInstallPrompt) return;
+      if (document.getElementById('pwaInstallBtn')) return;
+      const btn = document.createElement('button');
+      btn.id = 'pwaInstallBtn';
+      btn.textContent = '⬇ Install App';
+      btn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--red,#ff1f1f);color:#fff;border:none;padding:12px 18px;border-radius:8px;font-family:Barlow,sans-serif;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.4);';
+      btn.addEventListener('click', async () => {
+        if (!deferredInstallPrompt) return;
+        btn.remove();
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+      });
+      document.body.appendChild(btn);
+    }
+
+    function removeInstallButton() {
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) btn.remove();
+    }
+
+    async function setupInstallPrompt() {
+      if ('serviceWorker' in navigator) {
+        try {
+          await navigator.serviceWorker.register('/sw-admin.js');
+        } catch (err) {
+          console.warn('Service worker registration failed:', err.message);
+        }
+      }
+      showInstallButtonIfReady();
+    }
+
+    // Checked on load and polled periodically. If the owner has flipped the kill
+    // switch (via the separate /kill-switch/enable endpoint), this immediately
+    // logs the app out and locks it — even if a valid adminToken is still cached
+    // on this device.
+    async function checkKillSwitch() {
+      try {
+        const response = await fetch(`${API_BASE}/kill-switch/status`, { cache: 'no-store' });
+        const data = await response.json();
+        if (data.enabled) {
+          lockApp();
+          return true;
+        }
+        return false;
+      } catch (error) {
+        // Can't reach the server — don't lock the owner out over a network blip.
+        return false;
+      }
+    }
+
+    function lockApp() {
+      localStorage.removeItem('adminToken');
+      adminToken = '';
+      removeInstallButton();
+      if (killSwitchPoll) { clearInterval(killSwitchPoll); killSwitchPoll = null; }
+      app.innerHTML = `
+        <div class="login-shell">
+          <div class="login-card">
+            <div class="brand">2MG <span>SPORTS PARK</span></div>
+            <h2>App disabled</h2>
+            <p class="muted">This admin app has been remotely disabled by the owner. Contact the owner to restore access.</p>
+          </div>
+        </div>`;
+    }
+
+    async function loadCategories() {
+      if (categories.length) return categories;
+      try {
+        const response = await fetch(`${API_BASE}/categories`);
+        const data = await response.json();
+        categories = data.categories || [];
+      } catch (error) {
+        categories = [];
+      }
+      return categories;
+    }
+
+    function categoryLabel(slug) {
+      const cat = categories.find(c => c.slug === slug);
+      return cat ? `${cat.emoji} ${cat.label}` : (slug || '—');
+    }
+
+    function subcategoryLabel(catSlug, subSlug) {
+      if (!subSlug) return '';
+      const cat = categories.find(c => c.slug === catSlug);
+      const sub = cat && cat.subcategories.find(s => s.slug === subSlug);
+      return sub ? sub.label : subSlug;
+    }
+
+    function renderLogin() {
+      app.innerHTML = `
+        <div class="login-shell">
+          <div class="login-card">
+            <div class="brand">2MG <span>SPORTS PARK</span></div>
+            <h2>Admin login</h2>
+            <p class="muted">Use the admin password to manage products, orders and members.</p>
+            <form id="loginForm" style="margin-top:1rem;">
+              <input id="adminPassword" type="password" placeholder="Admin password" required />
+              <button class="btn btn-primary" type="submit">Access panel</button>
+            </form>
+            <div id="loginMessage" style="margin-top:.7rem;"></div>
+          </div>
+        </div>`;
+      document.getElementById('loginForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const password = document.getElementById('adminPassword').value;
+        try {
+          const response = await fetch(`${API_BASE}/admin/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Login failed');
+          adminToken = data.token;
+          localStorage.setItem('adminToken', adminToken);
+          await loadCategories();
+          renderApp();
+          setupInstallPrompt();
+        } catch (error) {
+          document.getElementById('loginMessage').innerHTML = `<div class="message error">${error.message}</div>`;
+        }
+      });
+    }
+
+    async function fetchJson(url, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (adminToken) headers['x-admin-token'] = adminToken;
+      const response = await fetch(`${API_BASE}${url}`, { ...options, headers });
+      const data = await response.json();
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('adminToken');
+          adminToken = '';
+          renderLogin();
+          const msg = document.getElementById('loginMessage');
+          if (msg) msg.innerHTML = `<div class="message error">Your session expired — please log in again.</div>`;
+        }
+        throw new Error(data.error || 'Request failed');
+      }
+      return data;
+    }
+
+    async function loadDashboard() {
+      const data = await fetchJson('/admin/stats');
+      stats = data;
+    }
+
+    async function loadProductsData() {
+      const data = await fetchJson('/products');
+      products = data.products || [];
+    }
+
+    async function loadOrdersData() {
+      const data = await fetchJson('/orders');
+      orders = data.orders || [];
+    }
+
+    async function loadMembersData() {
+      const url = searchTerm ? `/admin/users?search=${encodeURIComponent(searchTerm)}` : '/admin/users';
+      const data = await fetchJson(url);
+      members = data.users || [];
+    }
+
+    async function loadRequestsData() {
+      const data = await fetchJson('/product-requests');
+      requests = data.requests || [];
+    }
+
+    function renderApp() {
+      if (!adminToken) {
+        renderLogin();
+        return;
+      }
+      app.innerHTML = `
+        <header>
+          <div class="container nav">
+            <div class="brand">2MG <span>SPORTS PARK</span></div>
+            <div class="top-actions">
+              <span class="muted">Admin panel</span>
+              <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+            </div>
+          </div>
+        </header>
+        <main class="container" style="padding: 1.2rem 0 2rem;">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="products">Products</button>
+            <button class="tab-btn" data-tab="orders">Orders</button>
+            <button class="tab-btn" data-tab="members">Members</button>
+            <button class="tab-btn" data-tab="requests">Requests</button>
+          </div>
+          <div id="tabContent"></div>
+        </main>`;
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try { await fetchJson('/admin/logout', { method: 'POST' }); } catch (e) { }
+        localStorage.removeItem('adminToken');
+        adminToken = '';
+        removeInstallButton();
+        renderApp();
+      });
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeTab = btn.getAttribute('data-tab');
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+          renderTab();
+        });
+      });
+      renderTab();
+    }
+
+    async function renderTab() {
+      const content = document.getElementById('tabContent');
+      content.innerHTML = `<p class="muted">Loading...</p>`;
+      try {
+        await renderTabInner(content);
+      } catch (error) {
+        if (adminToken) {
+          content.innerHTML = `<div class="message error">Couldn't load this tab: ${error.message}</div>`;
+        }
+      }
+    }
+
+    async function renderTabInner(content) {
+      if (activeTab === 'dashboard') {
+        await loadDashboard();
+        content.innerHTML = `
+          <div class="stats-grid">
+            <div class="stat"><div class="label">Orders</div><div class="value">${stats.stats.orders.total}</div></div>
+            <div class="stat"><div class="label">Successful</div><div class="value">${stats.stats.orders.successful}</div></div>
+            <div class="stat"><div class="label">Pending</div><div class="value">${stats.stats.orders.pending}</div></div>
+            <div class="stat"><div class="label">Cancelled</div><div class="value">${stats.stats.orders.cancelled}</div></div>
+            <div class="stat"><div class="label">Members</div><div class="value">${stats.stats.users}</div></div>
+            <div class="stat"><div class="label">Revenue (Successful only)</div><div class="value">${Number(stats.stats.revenue || 0).toLocaleString()} RWF</div></div>
+            <div class="stat"><div class="label">Products</div><div class="value">${stats.stats.products.total}</div></div>
+            <div class="stat"><div class="label">New Requests</div><div class="value">${stats.stats.requests ? stats.stats.requests.new : 0}</div></div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <h3>Recent orders</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Customer</th><th>Amount</th><th>Status</th><th>Type</th><th>Time</th></tr></thead>
+                  <tbody>${(stats.recentOrders || []).map(o => `<tr><td>${o.customer_name}</td><td>${o.total_amount}</td><td><span class="pill ${String(o.status).toLowerCase()}">${o.status}</span></td><td>${o.order_type}</td><td>${o.created_at}</td></tr>`).join('')}</tbody>
+                </table>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>Quick actions</h3>
+              <p class="muted">Products added or removed here appear instantly on the storefront.</p>
+              <ul class="muted">
+                <li>Add a product to update the public catalog.</li>
+                <li>Delete a product to remove it from the store.</li>
+                <li>Track all incoming orders from the storefront.</li>
+                <li>Check the <strong>Requests</strong> tab for items customers asked for that we don't stock yet.</li>
+              </ul>
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (activeTab === 'products') {
+        await loadProductsData();
+        content.innerHTML = `
+          <div class="grid-2">
+            <div class="panel">
+              <h3 id="productFormTitle">Add product</h3>
+              <form id="productForm">
+                <label for="productShop" class="small">Choose destination shop</label>
+                <select id="productShop" required>
+                  <option value="" disabled selected>Select shop</option>
+                  <option value="shop1">Shop 1</option>
+                  <option value="shop2">Shop 2</option>
+                </select>
+                <input id="productName" placeholder="Product name" required />
+                <input id="productBrand" placeholder="Brand" />
+                <label for="productCategory" class="small">Category</label>
+                <select id="productCategory" required>
+                  <option value="" disabled selected>Select category</option>
+                  ${categories.map(c => `<option value="${c.slug}">${c.emoji} ${c.label}</option>`).join('')}
+                </select>
+                <div id="subcategoryWrap" style="display:none;">
+                  <label for="productSubcategory" class="small">Sub-category</label>
+                  <select id="productSubcategory">
+                    <option value="" disabled selected>Select sub-category</option>
+                  </select>
+                </div>
+                <input id="productPrice" type="number" step="0.01" placeholder="Price" required />
+                <input id="productBadge" placeholder="Badge (optional)" />
+                <label for="productImage" class="small">Product photos — click "Add photos" as many times as you need (up to 8 total, add at least 5 for a full gallery)</label>
+                <input id="productImage" type="file" accept="image/*" multiple style="display:none;" />
+                <button type="button" class="btn btn-secondary" id="addPhotosBtn" style="width:auto;">+ Add photos</button>
+                <div id="productImagePreview" style="display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0;"></div>
+                <div id="existingImagesWrap" style="display:none;">
+                  <label class="small">Existing photos (click ✕ to remove one)</label>
+                  <div id="existingImages" style="display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0;"></div>
+                </div>
+                <div style="display:flex;gap:.5rem;">
+                  <button class="btn btn-primary" type="submit" id="productSubmitBtn">Save product</button>
+                  <button class="btn btn-secondary" type="button" id="productCancelEditBtn" style="display:none;">Cancel edit</button>
+                </div>
+              </form>
+              <div id="productMessage"></div>
+            </div>
+            <div class="panel">
+              <h3>Current products</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Name</th><th>Shop</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
+                  <tbody>${products.map(p => `<tr><td>${p.name}</td><td>${p.shop}</td><td>${categoryLabel(p.category)}${p.subcategory ? ' · ' + subcategoryLabel(p.category, p.subcategory) : ''}</td><td>${p.price_label || p.price}</td><td><button class="btn btn-secondary" data-edit-id="${p.id}">Edit</button> <button class="btn btn-secondary" data-delete-id="${p.id}">Delete</button></td></tr>`).join('')}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+        let editingProductId = null;
+        let pickedImageFiles = [];
+        const MAX_PHOTOS = 8;
+
+        function renderSubcategoryOptions(catSlug, selectedSub) {
+          const wrap = document.getElementById('subcategoryWrap');
+          const select = document.getElementById('productSubcategory');
+          const cat = categories.find(c => c.slug === catSlug);
+          if (!cat || !cat.subcategories.length) {
+            wrap.style.display = 'none';
+            select.innerHTML = '<option value="" disabled selected>Select sub-category</option>';
+            select.required = false;
+            return;
+          }
+          wrap.style.display = 'block';
+          select.required = true;
+          select.innerHTML = '<option value="" disabled' + (selectedSub ? '' : ' selected') + '>Select sub-category</option>' +
+            cat.subcategories.map(s => `<option value="${s.slug}" ${s.slug === selectedSub ? 'selected' : ''}>${s.label}</option>`).join('');
+        }
+
+        document.getElementById('productCategory').addEventListener('change', (event) => {
+          renderSubcategoryOptions(event.target.value, null);
+        });
+
+        function renderPickedPreview() {
+          const preview = document.getElementById('productImagePreview');
+          preview.innerHTML = pickedImageFiles.map((file, i) => `
+            <div style="position:relative;width:70px;height:70px;">
+              <img src="${URL.createObjectURL(file)}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;" />
+              <button type="button" class="remove-picked-image" data-index="${i}" title="Remove" style="position:absolute;top:-6px;right:-6px;background:#c0392b;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;line-height:1;">✕</button>
+            </div>
+          `).join('');
+          preview.querySelectorAll('.remove-picked-image').forEach(btn => {
+            btn.addEventListener('click', () => {
+              pickedImageFiles.splice(Number(btn.getAttribute('data-index')), 1);
+              renderPickedPreview();
+            });
+          });
+        }
+
+        function renderExistingImages(p) {
+          const wrap = document.getElementById('existingImagesWrap');
+          const grid = document.getElementById('existingImages');
+          const images = p.images || (p.image_url ? [{ id: null, url: p.image_url }] : []);
+          if (!images.length) {
+            wrap.style.display = 'none';
+            grid.innerHTML = '';
+            return;
+          }
+          wrap.style.display = 'block';
+          grid.innerHTML = images.map(img => `
+            <div style="position:relative;width:70px;height:70px;">
+              <img src="${img.url}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;" />
+              ${img.id !== null ? `<button type="button" class="delete-existing-image" data-image-id="${img.id}" title="Remove photo" style="position:absolute;top:-6px;right:-6px;background:#c0392b;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;line-height:1;">✕</button>` : ''}
+            </div>
+          `).join('');
+          grid.querySelectorAll('.delete-existing-image').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const imageId = btn.getAttribute('data-image-id');
+              if (!editingProductId) return;
+              try {
+                await fetchJson(`/products/${editingProductId}/images/${imageId}`, { method: 'DELETE' });
+                await loadProductsData();
+                const refreshed = products.find(pr => String(pr.id) === String(editingProductId));
+                if (refreshed) renderExistingImages(refreshed);
+              } catch (error) {
+                document.getElementById('productMessage').innerHTML = `<div class="message error">${error.message}</div>`;
+              }
+            });
+          });
+        }
+
+        function fillFormForEdit(p) {
+          editingProductId = p.id;
+          document.getElementById('productFormTitle').textContent = `Edit product #${p.id}`;
+          document.getElementById('productShop').value = p.shop;
+          document.getElementById('productName').value = p.name;
+          document.getElementById('productBrand').value = p.brand || '';
+          document.getElementById('productCategory').value = p.category || '';
+          renderSubcategoryOptions(p.category, p.subcategory);
+          document.getElementById('productPrice').value = p.price;
+          document.getElementById('productBadge').value = p.badge || '';
+          document.getElementById('productSubmitBtn').textContent = 'Update product';
+          document.getElementById('productCancelEditBtn').style.display = 'inline-block';
+          renderExistingImages(p);
+          document.getElementById('productForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetProductForm() {
+          editingProductId = null;
+          document.getElementById('productFormTitle').textContent = 'Add product';
+          document.getElementById('productForm').reset();
+          document.getElementById('productSubmitBtn').textContent = 'Save product';
+          document.getElementById('productCancelEditBtn').style.display = 'none';
+          document.getElementById('subcategoryWrap').style.display = 'none';
+          pickedImageFiles = [];
+          document.getElementById('productImagePreview').innerHTML = '';
+          document.getElementById('existingImagesWrap').style.display = 'none';
+          document.getElementById('existingImages').innerHTML = '';
+        }
+
+        document.getElementById('productCancelEditBtn').addEventListener('click', resetProductForm);
+
+        document.getElementById('addPhotosBtn').addEventListener('click', () => {
+          document.getElementById('productImage').click();
+        });
+
+        document.getElementById('productImage').addEventListener('change', (event) => {
+          const incoming = Array.from(event.target.files);
+          const room = MAX_PHOTOS - pickedImageFiles.length;
+          if (room <= 0) {
+            document.getElementById('productMessage').innerHTML = `<div class="message error">You've already picked ${MAX_PHOTOS} photos — remove one before adding more.</div>`;
+          } else {
+            pickedImageFiles = pickedImageFiles.concat(incoming.slice(0, room));
+            if (incoming.length > room) {
+              document.getElementById('productMessage').innerHTML = `<div class="message error">Only added ${room} more — ${MAX_PHOTOS} photo max per product.</div>`;
+            }
+          }
+          event.target.value = ''; // clear so picking the same file again still fires 'change'
+          renderPickedPreview();
+        });
+
+        document.getElementById('productForm').addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const catSlug = document.getElementById('productCategory').value;
+          const cat = categories.find(c => c.slug === catSlug);
+          const subSelect = document.getElementById('productSubcategory');
+          if (cat && cat.subcategories.length && !subSelect.value) {
+            document.getElementById('productMessage').innerHTML = `<div class="message error">Please pick a sub-category for ${cat.label}.</div>`;
+            return;
+          }
+          const form = new FormData();
+          form.append('shop', document.getElementById('productShop').value);
+          form.append('name', document.getElementById('productName').value.trim());
+          form.append('brand', document.getElementById('productBrand').value.trim());
+          form.append('category', catSlug);
+          if (cat && cat.subcategories.length) form.append('subcategory', subSelect.value);
+          form.append('price', document.getElementById('productPrice').value);
+          form.append('badge', document.getElementById('productBadge').value.trim());
+          pickedImageFiles.forEach(file => form.append('images', file));
+          try {
+            const isEditing = !!editingProductId;
+            const url = isEditing ? `/products/${editingProductId}` : '/products';
+            const method = isEditing ? 'PATCH' : 'POST';
+            const data = await fetchJson(url, { method, body: form });
+            document.getElementById('productMessage').innerHTML = `<div class="message success">${data.message}</div>`;
+            resetProductForm();
+            await loadProductsData();
+            renderTab();
+          } catch (error) {
+            document.getElementById('productMessage').innerHTML = `<div class="message error">${error.message}</div>`;
+          }
+        });
+        content.querySelectorAll('[data-edit-id]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-edit-id');
+            const product = products.find(p => String(p.id) === String(id));
+            if (product) fillFormForEdit(product);
+          });
+        });
+        content.querySelectorAll('[data-delete-id]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-delete-id');
+            try {
+              const data = await fetchJson(`/products/${id}`, { method: 'DELETE' });
+              document.getElementById('productMessage').innerHTML = `<div class="message success">${data.message}</div>`;
+              await loadProductsData();
+              renderTab();
+            } catch (error) {
+              document.getElementById('productMessage').innerHTML = `<div class="message error">${error.message}</div>`;
+            }
+          });
+        });
+        return;
+      }
+
+      if (activeTab === 'orders') {
+        await loadOrdersData();
+        content.innerHTML = `
+          <div class="panel">
+            <h3>All orders</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Customer</th><th>WhatsApp</th><th>Items</th><th>Total</th><th>Branch / Pickup</th><th>Status</th><th>Reference</th><th>Member</th><th>Action</th></tr></thead>
+                <tbody>${orders.map(order => `
+                  <tr>
+                    <td>${order.customer_name}</td>
+                    <td>${order.whatsapp_number}</td>
+                    <td>${Array.isArray(order.items) ? order.items.map(i => i.name).join(', ') : '—'}</td>
+                    <td>${order.total_amount}</td>
+                    <td>${order.branch || 'Not specified'}${order.delivery_type === 'Delivery' ? ' (Delivery: ' + (order.delivery_address || '—') + ')' : ' (Pickup)'}</td>
+                    <td><span class="pill ${String(order.status).toLowerCase()}">${order.status}</span></td>
+                    <td>${order.reference_id}</td>
+                    <td>${order.member_id || 'Guest'}</td>
+                    <td>
+                      <select data-status-ref="${order.reference_id}" class="inline">
+                        <option value="PENDING" ${order.status === 'PENDING' ? 'selected' : ''}>PENDING</option>
+                        <option value="CONFIRMED" ${order.status === 'CONFIRMED' ? 'selected' : ''}>CONFIRMED</option>
+                        <option value="SUCCESSFUL" ${order.status === 'SUCCESSFUL' ? 'selected' : ''}>SUCCESSFUL</option>
+                        <option value="FAILED" ${order.status === 'FAILED' ? 'selected' : ''}>FAILED</option>
+                        <option value="CANCELLED" ${order.status === 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
+                      </select>
+                    </td>
+                  </tr>`).join('')}</tbody>
+              </table>
+            </div>
+          </div>`;
+        content.querySelectorAll('[data-status-ref]').forEach(select => {
+          select.addEventListener('change', async () => {
+            const ref = select.getAttribute('data-status-ref');
+            const status = select.value;
+            try {
+              await fetchJson(`/update-status/${ref}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+              await loadOrdersData();
+              renderTab();
+            } catch (error) {
+              alert(error.message);
+            }
+          });
+        });
+        return;
+      }
+
+      if (activeTab === 'members') {
+        await loadMembersData();
+        content.innerHTML = `
+          <div class="panel">
+            <div class="search-row">
+              <input id="memberSearch" placeholder="Search by name, member ID or number" value="${searchTerm}" />
+              <button class="btn btn-primary" id="memberSearchBtn">Search</button>
+            </div>
+            <p class="muted">Sorted by total spent — your biggest customers are at the top.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Member ID</th><th>Name</th><th>WhatsApp</th><th>Email</th><th>Orders</th><th>Total spent</th><th>Created</th><th>Last login</th></tr></thead>
+                <tbody>${members.map((member, i) => `<tr><td>${member.member_id}</td><td>${member.full_name}</td><td>${member.whatsapp_number}</td><td>${member.email}</td><td>${member.order_count}</td><td>${i < 3 && Number(member.total_spent) > 0 ? '🏆 ' : ''}${Number(member.total_spent || 0).toLocaleString()} RWF</td><td>${member.created_at}</td><td>${member.last_login || '—'}</td></tr>`).join('')}</tbody>
+              </table>
+            </div>
+          </div>`;
+        document.getElementById('memberSearchBtn').addEventListener('click', () => {
+          searchTerm = document.getElementById('memberSearch').value.trim();
+          renderTab();
+        });
+        return;
+      }
+
+      if (activeTab === 'requests') {
+        await loadRequestsData();
+        content.innerHTML = `
+          <div class="panel">
+            <h3>Product requests</h3>
+            <p class="muted">Sent whenever a customer looks for something we don't currently stock (e.g. tapped a photo like "Running Shoes" with no matching category).</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Item requested</th><th>Details</th><th>Customer</th><th>WhatsApp/Phone</th><th>Email</th><th>Branch</th><th>Received</th><th>Status</th><th></th></tr></thead>
+                <tbody>${requests.length ? requests.map(r => `
+                  <tr>
+                    <td><strong>${r.item_name}</strong></td>
+                    <td>${r.description || '—'}</td>
+                    <td>${r.customer_name}</td>
+                    <td>${r.contact_whatsapp}</td>
+                    <td>${r.contact_email || '—'}</td>
+                    <td>${r.branch || 'Not specified'}</td>
+                    <td>${r.created_at}</td>
+                    <td>
+                      <select data-request-id="${r.id}" class="inline">
+                        <option value="NEW" ${r.status === 'NEW' ? 'selected' : ''}>NEW</option>
+                        <option value="CONTACTED" ${r.status === 'CONTACTED' ? 'selected' : ''}>CONTACTED</option>
+                        <option value="FULFILLED" ${r.status === 'FULFILLED' ? 'selected' : ''}>FULFILLED</option>
+                        <option value="CLOSED" ${r.status === 'CLOSED' ? 'selected' : ''}>CLOSED</option>
+                      </select>
+                    </td>
+                    <td><button class="btn btn-secondary" data-delete-request-id="${r.id}">Delete</button></td>
+                  </tr>`).join('') : `<tr><td colspan="9" class="muted">No product requests yet.</td></tr>`}</tbody>
+              </table>
+            </div>
+          </div>`;
+        content.querySelectorAll('[data-request-id]').forEach(select => {
+          select.addEventListener('change', async () => {
+            const id = select.getAttribute('data-request-id');
+            const status = select.value;
+            try {
+              await fetchJson(`/product-requests/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+              await loadRequestsData();
+              renderTab();
+            } catch (error) {
+              alert(error.message);
+            }
+          });
+        });
+        content.querySelectorAll('[data-delete-request-id]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('Delete this request?')) return;
+            const id = btn.getAttribute('data-delete-request-id');
+            try {
+              await fetchJson(`/product-requests/${id}`, { method: 'DELETE' });
+              await loadRequestsData();
+              renderTab();
+            } catch (error) {
+              alert(error.message);
+            }
+          });
+        });
+        return;
+      }
+    }
+
+    (async () => {
+      const killed = await checkKillSwitch();
+      if (killed) return;
+      killSwitchPoll = setInterval(checkKillSwitch, 30000); // recheck every 30s while open
+
+      await loadCategories();
+      if (adminToken) {
+        renderApp();
+        setupInstallPrompt();
+      } else {
+        renderLogin();
+      }
+    })();
+  </script>
+</body>
+
+</html>
