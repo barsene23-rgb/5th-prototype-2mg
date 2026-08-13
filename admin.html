@@ -345,7 +345,10 @@
     }
 
     async function setupInstallPrompt() {
-      if ('serviceWorker' in navigator) {
+      // Service workers require an http/https origin — registering while the
+      // file is opened directly (file://) or embedded with a null origin
+      // (e.g. some editor "preview" panes) always fails, so skip it there.
+      if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
         try {
           await navigator.serviceWorker.register('/sw-admin.js');
         } catch (err) {
@@ -389,14 +392,25 @@
         </div>`;
     }
 
-    async function loadCategories() {
-      if (categories.length) return categories;
+    async function loadCategories(force) {
+      if (categories.length && !force) return categories;
       try {
         const response = await fetch(`${API_BASE}/categories`);
+        if (!response.ok) {
+          throw new Error(`/categories returned HTTP ${response.status}`);
+        }
         const data = await response.json();
         categories = data.categories || [];
+        if (!categories.length) {
+          console.warn('⚠️ /categories responded but returned an empty list.');
+        }
       } catch (error) {
+        console.error('⚠️ Failed to load categories:', error.message, '— retrying in 3s');
         categories = [];
+        // Render free-tier can be slow/asleep on first hit — retry once automatically.
+        // We don't force a re-render here (could wipe out a form the user is mid-filling);
+        // once categories populate, the next time a form/tab opens it'll have them.
+        setTimeout(() => { loadCategories(); }, 3000);
       }
       return categories;
     }
@@ -602,14 +616,36 @@
                 <input id="productBrand" placeholder="Brand" />
                 <label for="productCategory" class="small">Category</label>
                 <select id="productCategory" required>
-                  <option value="" disabled selected>Select category</option>
+                  <option value="" disabled selected>${categories.length ? 'Select category' : 'Loading categories… (reopen this form if empty after a few seconds)'}</option>
                   ${categories.map(c => `<option value="${c.slug}">${c.emoji} ${c.label}</option>`).join('')}
                 </select>
+                <button type="button" class="btn btn-secondary" id="toggleAddCategoryBtn" style="width:auto;font-size:.8rem;padding:.35rem .6rem;margin:.3rem 0;">+ Add new category</button>
+                <div id="addCategoryForm" style="display:none;gap:.5rem;flex-direction:column;background:rgba(255,255,255,.04);padding:.6rem;border-radius:8px;margin-bottom:.5rem;">
+                  <input id="newCategoryLabel" placeholder="Category name (e.g. Swim Goggles)" />
+                  <label class="small" for="newCategoryEmoji">Icon</label>
+                  <select id="newCategoryEmoji">
+                    ${['🎽','👟','👕','👖','🧥','🧢','🎒','⚽','🏀','🏈','🎾','🏐','🏸','🏓','🚴','🏊','🏋️','🥊','🧤','🩳','🧦','🕶️','📦'].map(e => `<option value="${e}">${e}</option>`).join('')}
+                  </select>
+                  <div style="display:flex;gap:.5rem;">
+                    <button type="button" class="btn btn-primary" id="submitNewCategoryBtn" style="width:auto;">Add category</button>
+                    <button type="button" class="btn btn-secondary" id="cancelNewCategoryBtn" style="width:auto;">Cancel</button>
+                  </div>
+                  <div id="newCategoryMessage"></div>
+                </div>
                 <div id="subcategoryWrap" style="display:none;">
                   <label for="productSubcategory" class="small">Sub-category</label>
                   <select id="productSubcategory">
                     <option value="" disabled selected>Select sub-category</option>
                   </select>
+                </div>
+                <button type="button" class="btn btn-secondary" id="toggleAddSubcategoryBtn" style="display:none;width:auto;font-size:.8rem;padding:.35rem .6rem;margin:.3rem 0;">+ Add sub-category</button>
+                <div id="addSubcategoryForm" style="display:none;gap:.5rem;flex-direction:column;background:rgba(255,255,255,.04);padding:.6rem;border-radius:8px;margin-bottom:.5rem;">
+                  <input id="newSubcategoryLabel" placeholder="Sub-category name (e.g. Sneakers)" />
+                  <div style="display:flex;gap:.5rem;">
+                    <button type="button" class="btn btn-primary" id="submitNewSubcategoryBtn" style="width:auto;">Add sub-category</button>
+                    <button type="button" class="btn btn-secondary" id="cancelNewSubcategoryBtn" style="width:auto;">Cancel</button>
+                  </div>
+                  <div id="newSubcategoryMessage"></div>
                 </div>
                 <input id="productPrice" type="number" step="0.01" placeholder="Price" required />
                 <input id="productBadge" placeholder="Badge (optional)" />
@@ -645,7 +681,12 @@
         function renderSubcategoryOptions(catSlug, selectedSub) {
           const wrap = document.getElementById('subcategoryWrap');
           const select = document.getElementById('productSubcategory');
+          const addSubBtn = document.getElementById('toggleAddSubcategoryBtn');
           const cat = categories.find(c => c.slug === catSlug);
+
+          addSubBtn.style.display = cat ? 'inline-block' : 'none';
+          addSubBtn.textContent = cat ? `+ Add sub-category to ${cat.label}` : '+ Add sub-category';
+
           if (!cat || !cat.subcategories.length) {
             wrap.style.display = 'none';
             select.innerHTML = '<option value="" disabled selected>Select sub-category</option>';
@@ -658,8 +699,89 @@
             cat.subcategories.map(s => `<option value="${s.slug}" ${s.slug === selectedSub ? 'selected' : ''}>${s.label}</option>`).join('');
         }
 
+        function refreshCategorySelectOptions(selectedSlug) {
+          const sel = document.getElementById('productCategory');
+          sel.innerHTML = '<option value="" disabled' + (selectedSlug ? '' : ' selected') + '>Select category</option>' +
+            categories.map(c => `<option value="${c.slug}" ${c.slug === selectedSlug ? 'selected' : ''}>${c.emoji} ${c.label}</option>`).join('');
+        }
+
         document.getElementById('productCategory').addEventListener('change', (event) => {
           renderSubcategoryOptions(event.target.value, null);
+        });
+
+        // --- Add new category, on the fly, no code changes needed ---
+        document.getElementById('toggleAddCategoryBtn').addEventListener('click', () => {
+          const form = document.getElementById('addCategoryForm');
+          form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+        });
+        document.getElementById('cancelNewCategoryBtn').addEventListener('click', () => {
+          document.getElementById('addCategoryForm').style.display = 'none';
+          document.getElementById('newCategoryLabel').value = '';
+          document.getElementById('newCategoryMessage').innerHTML = '';
+        });
+        document.getElementById('submitNewCategoryBtn').addEventListener('click', async () => {
+          const label = document.getElementById('newCategoryLabel').value.trim();
+          const emoji = document.getElementById('newCategoryEmoji').value;
+          const msgEl = document.getElementById('newCategoryMessage');
+          if (!label) {
+            msgEl.innerHTML = '<div class="message error">Enter a category name.</div>';
+            return;
+          }
+          try {
+            const data = await fetchJson('/categories', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ label, emoji })
+            });
+            await loadCategories(true);
+            refreshCategorySelectOptions(data.category.slug);
+            document.getElementById('productCategory').value = data.category.slug;
+            renderSubcategoryOptions(data.category.slug, null);
+            document.getElementById('addCategoryForm').style.display = 'none';
+            document.getElementById('newCategoryLabel').value = '';
+            msgEl.innerHTML = '';
+          } catch (error) {
+            msgEl.innerHTML = `<div class="message error">${error.message}</div>`;
+          }
+        });
+
+        // --- Add new sub-category under the currently selected category ---
+        document.getElementById('toggleAddSubcategoryBtn').addEventListener('click', () => {
+          const form = document.getElementById('addSubcategoryForm');
+          form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+        });
+        document.getElementById('cancelNewSubcategoryBtn').addEventListener('click', () => {
+          document.getElementById('addSubcategoryForm').style.display = 'none';
+          document.getElementById('newSubcategoryLabel').value = '';
+          document.getElementById('newSubcategoryMessage').innerHTML = '';
+        });
+        document.getElementById('submitNewSubcategoryBtn').addEventListener('click', async () => {
+          const catSlug = document.getElementById('productCategory').value;
+          const label = document.getElementById('newSubcategoryLabel').value.trim();
+          const msgEl = document.getElementById('newSubcategoryMessage');
+          if (!catSlug) {
+            msgEl.innerHTML = '<div class="message error">Select a category first.</div>';
+            return;
+          }
+          if (!label) {
+            msgEl.innerHTML = '<div class="message error">Enter a sub-category name.</div>';
+            return;
+          }
+          try {
+            const data = await fetchJson(`/categories/${catSlug}/subcategories`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ label })
+            });
+            await loadCategories(true);
+            const newSub = data.category.subcategories.find(s => s.label === label);
+            renderSubcategoryOptions(catSlug, newSub ? newSub.slug : null);
+            document.getElementById('addSubcategoryForm').style.display = 'none';
+            document.getElementById('newSubcategoryLabel').value = '';
+            msgEl.innerHTML = '';
+          } catch (error) {
+            msgEl.innerHTML = `<div class="message error">${error.message}</div>`;
+          }
         });
 
         function renderPickedPreview() {
